@@ -1,0 +1,42 @@
+{
+  "name": "agent-jake-browser-mcp-server",
+  "version": "1.0.0",
+  "description": "MCP server for browser automation via Chrome extension",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "agent-jake-browser-mcp": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "start": "node dist/index.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "mcp",
+    "browser-automation",
+    "chrome-extension"
+  ],
+  "author": "Agent Jake",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.25.2",
+    "commander": "^14.0.2",
+    "ws": "^8.19.0",
+    "zod": "^4.3.5",
+    "zod-to-json-schema": "^3.25.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.57.0",
+    "@types/node": "^25.0.9",
+    "@types/ws": "^8.18.1",
+    "playwright": "^1.57.0",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.17"
+  }
+}

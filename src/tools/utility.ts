@@ -1,5 +1,5 @@
 /**
- * Utility tools: wait, screenshot, getConsoleLogs.
+ * Utility tools: wait, screenshot, getConsoleLogs, evaluate, resizeViewport.
  */
 import { z } from 'zod';
 import { createTool, textResult, imageResult, errorResult } from './types.js';
@@ -114,8 +114,59 @@ export const getConsoleLogsTool: Tool = createTool({
   },
 });
 
+/**
+ * Execute JavaScript code on the page.
+ */
+export const evaluateTool: Tool = createTool({
+  name: 'browser_evaluate',
+  description: 'Execute JavaScript code on the page and return the result. The code should be a valid JavaScript expression.',
+  schema: z.object({
+    code: z.string().describe('JavaScript expression or code to execute (e.g., "document.title", "window.location.href")'),
+  }),
+  async handle(context, params) {
+    const response = await context.send('browser_evaluate', {
+      code: params.code,
+    });
+
+    if (!response.success) {
+      return errorResult(response.error?.message ?? 'Evaluation failed');
+    }
+
+    const result = response.result;
+    const formatted = typeof result === 'object' ? JSON.stringify(result, null, 2) : String(result);
+
+    return textResult(formatted);
+  },
+});
+
+/**
+ * Resize the browser viewport.
+ */
+export const resizeViewportTool: Tool = createTool({
+  name: 'browser_resize_viewport',
+  description: 'Set the browser viewport size (width x height in pixels).',
+  schema: z.object({
+    width: z.number().int().min(320).max(3840).describe('Viewport width in pixels'),
+    height: z.number().int().min(200).max(2160).describe('Viewport height in pixels'),
+  }),
+  async handle(context, params) {
+    const response = await context.send('browser_resize_viewport', {
+      width: params.width,
+      height: params.height,
+    });
+
+    if (!response.success) {
+      return errorResult(response.error?.message ?? 'Resize failed');
+    }
+
+    return textResult(`Viewport resized to ${params.width}x${params.height}`);
+  },
+});
+
 export const utilityTools: Tool[] = [
   waitTool,
   screenshotTool,
   getConsoleLogsTool,
+  evaluateTool,
+  resizeViewportTool,
 ];

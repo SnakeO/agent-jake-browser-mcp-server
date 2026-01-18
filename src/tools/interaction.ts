@@ -1,5 +1,5 @@
 /**
- * Interaction tools: click, type, hover, drag, selectOption, pressKey.
+ * Interaction tools: click, type, hover, drag, selectOption, pressKey, uploadFile.
  */
 import { z } from 'zod';
 import { createTool, textResult, errorResult } from './types.js';
@@ -203,6 +203,35 @@ export const pressKeyTool: Tool = createTool({
   },
 });
 
+/**
+ * Upload a file through a file input element.
+ */
+export const uploadFileTool: Tool = createTool({
+  name: 'browser_upload_file',
+  description: 'Upload a file through a file input element.',
+  schema: z.object({
+    ref: z.string().optional().describe('Element reference from snapshot'),
+    selector: z.string().optional().describe('CSS selector for file input'),
+    filePath: z.string().describe('Absolute path to the file to upload'),
+  }).refine(
+    data => data.ref || data.selector,
+    { message: 'Either ref or selector must be provided' }
+  ),
+  async handle(context, params) {
+    const response = await context.send('browser_upload_file', {
+      ref: params.ref,
+      selector: params.selector,
+      filePath: params.filePath,
+    });
+
+    if (!response.success) {
+      return errorResult(response.error?.message ?? 'Upload failed');
+    }
+
+    return textResult(`File uploaded: ${params.filePath}`);
+  },
+});
+
 export const interactionTools: Tool[] = [
   clickTool,
   typeTool,
@@ -210,4 +239,5 @@ export const interactionTools: Tool[] = [
   dragTool,
   selectOptionTool,
   pressKeyTool,
+  uploadFileTool,
 ];

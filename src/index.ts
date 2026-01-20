@@ -5,7 +5,7 @@ import { program } from 'commander';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { createServer } from './server.js';
 import { logger, setLogLevel } from './utils/logger.js';
-import { isPortAvailable, killProcessOnPort } from './utils/port.js';
+import { isPortAvailable, killProcessOnPort, waitForPort } from './utils/port.js';
 
 const DEFAULT_PORT = 8765;
 
@@ -25,8 +25,8 @@ function setupExitWatchdog(): void {
     }
   };
 
-  // Check every 5 seconds
-  setInterval(checkParent, 5000);
+  // Check every 1 second for faster cleanup when parent exits
+  setInterval(checkParent, 1000);
 
   // Handle termination signals
   process.on('SIGINT', () => {
@@ -70,6 +70,14 @@ async function main(): Promise<void> {
             logger.error(`Failed to kill process on port ${port}`);
             process.exit(1);
           }
+
+          // Wait for port to be released by kernel
+          const portFreed = await waitForPort(port, 3000);
+          if (!portFreed) {
+            logger.error(`Port ${port} still in use after killing process`);
+            process.exit(1);
+          }
+          logger.info(`Port ${port} is now available`);
         } else {
           logger.error(`Port ${port} is already in use. Use --kill-existing to terminate the existing process.`);
           process.exit(1);

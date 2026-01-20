@@ -163,10 +163,31 @@ export const resizeViewportTool: Tool = createTool({
   },
 });
 
+/**
+ * Get page HTML using CDP (CSP-safe, no JS eval required).
+ * Use this instead of browser_evaluate for getting page HTML on sites with strict CSP.
+ */
+export const getHtmlTool: Tool = createTool({
+  name: 'browser_get_html',
+  description: 'Get the full HTML of the current page using CDP DOM.getOuterHTML. CSP-safe - works on sites that block eval.',
+  schema: z.object({}),
+  async handle(context) {
+    const response = await context.send('browser_get_html', {});
+
+    if (!response.success) {
+      return errorResult(response.error?.message ?? 'Get HTML failed');
+    }
+
+    const result = response.result as { html: string };
+    return textResult(result.html);
+  },
+});
+
 export const utilityTools: Tool[] = [
   waitTool,
   screenshotTool,
   getConsoleLogsTool,
   evaluateTool,
   resizeViewportTool,
+  getHtmlTool,
 ];

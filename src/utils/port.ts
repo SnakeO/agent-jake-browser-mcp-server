@@ -42,6 +42,7 @@ export async function findProcessOnPort(port: number): Promise<number | null> {
 
 /**
  * Kill process on a port if one exists.
+ * Uses SIGTERM first, then SIGKILL for stubborn/suspended processes.
  */
 export async function killProcessOnPort(port: number): Promise<boolean> {
   const pid = await findProcessOnPort(port);
@@ -50,9 +51,20 @@ export async function killProcessOnPort(port: number): Promise<boolean> {
   }
 
   try {
+    // Try SIGTERM first (graceful shutdown)
     process.kill(pid, 'SIGTERM');
-    // Wait a bit for process to terminate
     await new Promise(resolve => setTimeout(resolve, 500));
+
+    // Check if process is still running
+    try {
+      process.kill(pid, 0); // Signal 0 just checks if process exists
+      // Process still exists, use SIGKILL (force kill - works on suspended processes)
+      process.kill(pid, 'SIGKILL');
+      await new Promise(resolve => setTimeout(resolve, 200));
+    } catch {
+      // Process already gone, success
+    }
+
     return true;
   } catch {
     return false;
